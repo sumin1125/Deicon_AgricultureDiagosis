@@ -325,6 +325,21 @@ class BaseModel(LightningModule):
         optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer
 
+    def configure_optimizers(self):
+        optimizer = torch.optim.AdamW(self.parameters(), lr=self.learning_rate)
+        scheduler = torch.optim.lr_scheduler.OneCycleLR(
+            max_lr=lr,
+            epochs=max_epochs,
+            optimizer=optimizer,
+            steps_per_epoch=int(len(train_dataset) / batch_size),
+            pct_start=0.1,
+            div_factor=10,
+            final_div_factor=100,
+            base_momentum=0.90,
+            max_momentum=0.95,
+        )
+        return [optimizer], [scheduler]
+
     def forward(self, img, seq):
         cnn_output = self.cnn(img)
         output = self.rnn(cnn_output, seq)
@@ -532,8 +547,8 @@ def eval(
 
 MODEL_NAME = 'eff'
 
-train(MODEL_NAME, csv_feature_dict, label_encoder, seed=SEED)
+#train(MODEL_NAME, csv_feature_dict, label_encoder, seed=SEED)
 
-CKPT_PATH = 'weights/resnet50/epoch=8-val_score=0.923.ckpt'
+CKPT_PATH = 'weights/eff/epoch=9-val_score=0.935.ckpt'
 
 eval(CKPT_PATH, csv_feature_dict, label_encoder, label_decoder)    

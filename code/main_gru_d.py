@@ -20,7 +20,7 @@ from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from pytorch_lightning.utilities.seed import seed_everything
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
-
+from GRUD.src.GRUD_model import grud_model
 
 ROOT_DIR = '../data'
 
@@ -107,7 +107,7 @@ EMBEDDING_DIM = 512
 NUM_FEATURES = len(csv_feature_dict)
 MAX_LEN = 24*6
 DROPOUT_RATE = 0.1
-EPOCHS = 10
+EPOCHS = 20
 NUM_WORKERS = 2
 
 torch.multiprocessing.set_sharing_strategy('file_system')
@@ -291,6 +291,7 @@ class CNN_Encoder(nn.Module):
 class LSTM_Decoder(nn.Module):
     def __init__(self, max_len, embedding_dim, num_features, class_n, rate):
         super(LSTM_Decoder, self).__init__()
+        self.lstm = grud_model(max_len, embedding_dim, embedding_dim)
         self.lstm = nn.LSTM(max_len, embedding_dim)
         self.rnn_fc = nn.Linear(num_features*embedding_dim, 1000)
         self.final_layer = nn.Linear(1000 + 1000, class_n)  # resnet out_dim + lstm out_dim
@@ -417,7 +418,6 @@ def train(model_name, csv_feature_dict, label_encoder, seed=42):
     Use for model trained image and time series.
     """
     train_data, val_data = split_data(seed=seed, mode='train')
-    
     train_transforms = get_train_transforms(IMAGE_HEIGHT, IMAGE_WIDTH)
     val_transforms = get_valid_transforms(IMAGE_HEIGHT, IMAGE_WIDTH)
     
@@ -530,7 +530,7 @@ def eval(
 
     seed_everything(SEED)
 
-MODEL_NAME = 'eff'
+MODEL_NAME = 'eff_grud-schedul'
 
 train(MODEL_NAME, csv_feature_dict, label_encoder, seed=SEED)
 
